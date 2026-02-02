@@ -1,0 +1,528 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API untuk menerima webhook dari Lark",
+        "title": "API Lark Webhook",
+        "termsOfService": "https://example.com/terms",
+        "contact": {
+            "name": "API Support",
+            "email": "tsaqif@adamata.co"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Health check \u0026 welcome message",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Welcome endpoint",
+                "responses": {
+                    "200": {
+                        "description": "Welcome to API Lark",
+                        "schema": {
+                            "$ref": "#/definitions/response.WelcomeSuccessExample"
+                        }
+                    }
+                }
+            }
+        },
+        "/internal/generate-lark-token": {
+            "get": {
+                "description": "Generate JWT token used by Lark to access webhook endpoint",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Generate JWT token for Lark webhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Static webhook secret",
+                        "name": "X-Webhook-Secret",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.GenerateTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid payload",
+                        "schema": {
+                            "$ref": "#/definitions/response.BadRequestErrorExample"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.UnauthorizedErrorExample"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limited",
+                        "schema": {
+                            "$ref": "#/definitions/response.RateLimitErrorExample"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.InternalServerErrorExample"
+                        }
+                    }
+                }
+            }
+        },
+        "/webhook/lark": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Receive webhook from Lark and create record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Lark Webhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Static webhook secret",
+                        "name": "X-Webhook-Secret",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Payload from Lark",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LarkWebhookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Record created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.RecordCreatedSuccessExample"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid payload",
+                        "schema": {
+                            "$ref": "#/definitions/response.BadRequestErrorExample"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.UnauthorizedErrorExample"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ForbiddenErrorExample"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limited",
+                        "schema": {
+                            "$ref": "#/definitions/response.RateLimitErrorExample"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.InternalServerErrorExample"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.Record": {
+            "type": "object",
+            "properties": {
+                "collect_dataset": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "date_of_incident": {
+                    "type": "string"
+                },
+                "day_of_incident": {
+                    "type": "string"
+                },
+                "how_to_handle": {
+                    "type": "string"
+                },
+                "incident_description": {
+                    "type": "string"
+                },
+                "incident_title": {
+                    "type": "string"
+                },
+                "lightbox_type": {
+                    "type": "string"
+                },
+                "machine_model": {
+                    "type": "string"
+                },
+                "modified_by": {
+                    "type": "string"
+                },
+                "process_reason": {
+                    "type": "string"
+                },
+                "processing_model": {
+                    "type": "string"
+                },
+                "set_type": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "time_of_incident": {
+                    "type": "string"
+                },
+                "types_of_spareparts": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LarkWebhookRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/domain.Record"
+                }
+            }
+        },
+        "response.BadRequestErrorExample": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "example": "INVALID_PAYLOAD"
+                        },
+                        "details": {
+                            "type": "string",
+                            "example": "Payload validation failed"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid payload"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.ForbiddenErrorExample": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "example": "FORBIDDEN"
+                        },
+                        "details": {
+                            "type": "string",
+                            "example": "Access is not allowed"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Forbidden"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.GenerateTokenResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "access_token": {
+                            "type": "string",
+                            "example": "eyJhbGciOi..."
+                        },
+                        "expires_in": {
+                            "type": "integer",
+                            "example": 31536000
+                        },
+                        "token_type": {
+                            "type": "string",
+                            "example": "Bearer"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Token generated successfully"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "response.InternalServerErrorExample": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "example": "INTERNAL_SERVER_ERROR"
+                        },
+                        "details": {
+                            "type": "string",
+                            "example": "Unexpected error occurred"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Internal server error"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.RateLimitErrorExample": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "example": "RATE_LIMITED"
+                        },
+                        "details": {
+                            "type": "string",
+                            "example": "Too many requests"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "example": 5
+                        },
+                        "window": {
+                            "type": "string",
+                            "example": "1m0s"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Too many requests"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.RecordCreatedSuccessExample": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "collect_dataset": {
+                            "type": "string",
+                            "example": "Yes"
+                        },
+                        "created_at": {
+                            "type": "string",
+                            "example": "2026-01-29T16:30:00Z"
+                        },
+                        "created_by": {
+                            "type": "string",
+                            "example": "admin"
+                        },
+                        "date_of_incident": {
+                            "type": "string",
+                            "example": "2026-01-29"
+                        },
+                        "day_of_incident": {
+                            "type": "string",
+                            "example": "Monday"
+                        },
+                        "how_to_handle": {
+                            "type": "string",
+                            "example": "Handle with care"
+                        },
+                        "id": {
+                            "type": "string",
+                            "example": "1"
+                        },
+                        "incident_description": {
+                            "type": "string",
+                            "example": "Description of the machine error"
+                        },
+                        "incident_title": {
+                            "type": "string",
+                            "example": "Machine Error"
+                        },
+                        "lightbox_type": {
+                            "type": "string",
+                            "example": "Type A"
+                        },
+                        "machine_model": {
+                            "type": "string",
+                            "example": "Model X"
+                        },
+                        "modified_by": {
+                            "type": "string",
+                            "example": "admin"
+                        },
+                        "process_reason": {
+                            "type": "string",
+                            "example": "Routine check"
+                        },
+                        "processing_model": {
+                            "type": "string",
+                            "example": "Model Y"
+                        },
+                        "set_type": {
+                            "type": "string",
+                            "example": "Set 1"
+                        },
+                        "status": {
+                            "type": "string",
+                            "example": "OPEN"
+                        },
+                        "time_of_incident": {
+                            "type": "string",
+                            "example": "14:30:00"
+                        },
+                        "types_of_spareparts": {
+                            "type": "string",
+                            "example": "Sparepart A, Sparepart B"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Record created successfully"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "response.UnauthorizedErrorExample": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "example": "MISSING_AUTHORIZATION"
+                        },
+                        "details": {
+                            "type": "string",
+                            "example": "Missing Authorization header"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Unauthorized"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.WelcomeSuccessExample": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "example": "Lark Webhook API"
+                        },
+                        "status": {
+                            "type": "string",
+                            "example": "running"
+                        },
+                        "version": {
+                            "type": "string",
+                            "example": "v1"
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Welcome to API Lark"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

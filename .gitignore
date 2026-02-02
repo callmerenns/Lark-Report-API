@@ -1,0 +1,82 @@
+############################
+# Go
+############################
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Vendor (jika tidak dikomit)
+vendor/
+
+# Build output
+bin/
+dist/
+build/
+
+############################
+# Environment variables
+############################
+.env
+.env.*
+!.env.example
+
+############################
+# Logs
+############################
+*.log
+logs/
+
+############################
+# Docker
+############################
+# Local docker override
+docker-compose.override.yml
+
+# Docker runtime files
+*.pid
+
+############################
+# Redis
+############################
+dump.rdb
+appendonly.aof
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.tmp
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Test / Coverage
+############################
+coverage.out
+coverage.html
+*.cover
+
+############################
+# Security
+############################
+*.pem
+*.key
+*.crt
+*.p12

@@ -1,0 +1,362 @@
+basePath: /
+definitions:
+  domain.Record:
+    properties:
+      collect_dataset:
+        type: string
+      created_by:
+        type: string
+      date_of_incident:
+        type: string
+      day_of_incident:
+        type: string
+      how_to_handle:
+        type: string
+      incident_description:
+        type: string
+      incident_title:
+        type: string
+      lightbox_type:
+        type: string
+      machine_model:
+        type: string
+      modified_by:
+        type: string
+      process_reason:
+        type: string
+      processing_model:
+        type: string
+      set_type:
+        type: string
+      status:
+        type: string
+      time_of_incident:
+        type: string
+      types_of_spareparts:
+        type: string
+    type: object
+  dto.LarkWebhookRequest:
+    properties:
+      data:
+        $ref: '#/definitions/domain.Record'
+    type: object
+  response.BadRequestErrorExample:
+    properties:
+      error:
+        properties:
+          code:
+            example: INVALID_PAYLOAD
+            type: string
+          details:
+            example: Payload validation failed
+            type: string
+        type: object
+      message:
+        example: Invalid payload
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.ForbiddenErrorExample:
+    properties:
+      error:
+        properties:
+          code:
+            example: FORBIDDEN
+            type: string
+          details:
+            example: Access is not allowed
+            type: string
+        type: object
+      message:
+        example: Forbidden
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.GenerateTokenResponse:
+    properties:
+      data:
+        properties:
+          access_token:
+            example: eyJhbGciOi...
+            type: string
+          expires_in:
+            example: 31536000
+            type: integer
+          token_type:
+            example: Bearer
+            type: string
+        type: object
+      message:
+        example: Token generated successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.InternalServerErrorExample:
+    properties:
+      error:
+        properties:
+          code:
+            example: INTERNAL_SERVER_ERROR
+            type: string
+          details:
+            example: Unexpected error occurred
+            type: string
+        type: object
+      message:
+        example: Internal server error
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.RateLimitErrorExample:
+    properties:
+      error:
+        properties:
+          code:
+            example: RATE_LIMITED
+            type: string
+          details:
+            example: Too many requests
+            type: string
+          limit:
+            example: 5
+            type: integer
+          window:
+            example: 1m0s
+            type: string
+        type: object
+      message:
+        example: Too many requests
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.RecordCreatedSuccessExample:
+    properties:
+      data:
+        properties:
+          collect_dataset:
+            example: "Yes"
+            type: string
+          created_at:
+            example: "2026-01-29T16:30:00Z"
+            type: string
+          created_by:
+            example: admin
+            type: string
+          date_of_incident:
+            example: "2026-01-29"
+            type: string
+          day_of_incident:
+            example: Monday
+            type: string
+          how_to_handle:
+            example: Handle with care
+            type: string
+          id:
+            example: "1"
+            type: string
+          incident_description:
+            example: Description of the machine error
+            type: string
+          incident_title:
+            example: Machine Error
+            type: string
+          lightbox_type:
+            example: Type A
+            type: string
+          machine_model:
+            example: Model X
+            type: string
+          modified_by:
+            example: admin
+            type: string
+          process_reason:
+            example: Routine check
+            type: string
+          processing_model:
+            example: Model Y
+            type: string
+          set_type:
+            example: Set 1
+            type: string
+          status:
+            example: OPEN
+            type: string
+          time_of_incident:
+            example: "14:30:00"
+            type: string
+          types_of_spareparts:
+            example: Sparepart A, Sparepart B
+            type: string
+        type: object
+      message:
+        example: Record created successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.UnauthorizedErrorExample:
+    properties:
+      error:
+        properties:
+          code:
+            example: MISSING_AUTHORIZATION
+            type: string
+          details:
+            example: Missing Authorization header
+            type: string
+        type: object
+      message:
+        example: Unauthorized
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.WelcomeSuccessExample:
+    properties:
+      data:
+        properties:
+          name:
+            example: Lark Webhook API
+            type: string
+          status:
+            example: running
+            type: string
+          version:
+            example: v1
+            type: string
+        type: object
+      message:
+        example: Welcome to API Lark
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: tsaqif@adamata.co
+    name: API Support
+  description: API untuk menerima webhook dari Lark
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://example.com/terms
+  title: API Lark Webhook
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Health check & welcome message
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Welcome to API Lark
+          schema:
+            $ref: '#/definitions/response.WelcomeSuccessExample'
+      summary: Welcome endpoint
+      tags:
+      - Health
+  /internal/generate-lark-token:
+    get:
+      description: Generate JWT token used by Lark to access webhook endpoint
+      parameters:
+      - description: Static webhook secret
+        in: header
+        name: X-Webhook-Secret
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.GenerateTokenResponse'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/response.BadRequestErrorExample'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.UnauthorizedErrorExample'
+        "429":
+          description: Rate limited
+          schema:
+            $ref: '#/definitions/response.RateLimitErrorExample'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.InternalServerErrorExample'
+      summary: Generate JWT token for Lark webhook
+      tags:
+      - Internal
+  /webhook/lark:
+    post:
+      consumes:
+      - application/json
+      description: Receive webhook from Lark and create record
+      parameters:
+      - description: Static webhook secret
+        in: header
+        name: X-Webhook-Secret
+        required: true
+        type: string
+      - description: Payload from Lark
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LarkWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Record created successfully
+          schema:
+            $ref: '#/definitions/response.RecordCreatedSuccessExample'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/response.BadRequestErrorExample'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.UnauthorizedErrorExample'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ForbiddenErrorExample'
+        "429":
+          description: Rate limited
+          schema:
+            $ref: '#/definitions/response.RateLimitErrorExample'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.InternalServerErrorExample'
+      security:
+      - BearerAuth: []
+      summary: Lark Webhook
+      tags:
+      - Webhook
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
