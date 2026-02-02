@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"log"
+	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -10,13 +12,29 @@ import (
 var Redis *redis.Client
 
 func InitRedis(addr, password string, db int) {
-	Redis = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
-	})
+	var opt *redis.Options
+	var err error
 
-	if err := Redis.Ping(context.Background()).Err(); err != nil {
+	// 🔥 Support rediss:// (Upstash)
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		opt, err = redis.ParseURL(addr)
+		if err != nil {
+			log.Fatal("Failed parse Redis URL:", err)
+		}
+	} else {
+		opt = &redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       db,
+		}
+	}
+
+	Redis = redis.NewClient(opt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := Redis.Ping(ctx).Err(); err != nil {
 		log.Fatal("Failed connect Redis:", err)
 	}
 

@@ -52,7 +52,8 @@ func RegisterRoutes(
 	// Webhook
 	webhook := r.Group("/webhook")
 	webhook.Use(
-		middleware.LuaRateLimiter(cfg, "lark_webhook", 30, time.Minute),
+		// middleware.LuaRateLimiter(cfg, "lark_webhook", 30, time.Minute),
+		middleware.SimpleRateLimiter(cfg, "lark_webhook", 60, time.Minute),
 		middleware.WebhookSecret(cfg),
 		middleware.JWT(cfg),
 	)
@@ -63,7 +64,8 @@ func RegisterRoutes(
 	// Internal
 	internal := r.Group("/internal")
 	internal.Use(
-		middleware.LuaRateLimiter(cfg, "internal", 5, time.Minute),
+		// middleware.LuaRateLimiter(cfg, "internal", 5, time.Minute),
+		middleware.SimpleRateLimiter(cfg, "internal", 10, time.Minute),
 		middleware.WebhookSecret(cfg),
 	)
 	{
