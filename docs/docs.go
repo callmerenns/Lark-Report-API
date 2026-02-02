@@ -195,9 +195,6 @@ const docTemplate = `{
                 "incident_description": {
                     "type": "string"
                 },
-                "incident_title": {
-                    "type": "string"
-                },
                 "lightbox_type": {
                     "type": "string"
                 },
@@ -415,10 +412,6 @@ const docTemplate = `{
                             "type": "string",
                             "example": "Description of the machine error"
                         },
-                        "incident_title": {
-                            "type": "string",
-                            "example": "Machine Error"
-                        },
                         "lightbox_type": {
                             "type": "string",
                             "example": "Type A"
@@ -536,11 +529,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "g3p06lb7-9200.asse.devtunnels.ms",
 	BasePath:         "/",
-	Schemes:          []string{},
-	Title:            "API Lark Webhook",
-	Description:      "API untuk menerima webhook dari Lark",
+	Schemes:          []string{"https"},
+	Title:            "Lark Report API",
+	Description:      "Lark Report API Service",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

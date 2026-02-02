@@ -1,8 +1,11 @@
 {
+    "schemes": [
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "description": "API untuk menerima webhook dari Lark",
-        "title": "API Lark Webhook",
+        "description": "Lark Report API Service",
+        "title": "Lark Report API",
         "termsOfService": "https://example.com/terms",
         "contact": {
             "name": "API Support",
@@ -14,7 +17,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "g3p06lb7-9200.asse.devtunnels.ms",
     "basePath": "/",
     "paths": {
         "/": {
@@ -187,9 +190,6 @@
                     "type": "string"
                 },
                 "incident_description": {
-                    "type": "string"
-                },
-                "incident_title": {
                     "type": "string"
                 },
                 "lightbox_type": {
@@ -408,10 +408,6 @@
                         "incident_description": {
                             "type": "string",
                             "example": "Description of the machine error"
-                        },
-                        "incident_title": {
-                            "type": "string",
-                            "example": "Machine Error"
                         },
                         "lightbox_type": {
                             "type": "string",

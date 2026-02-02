@@ -14,8 +14,6 @@ definitions:
         type: string
       incident_description:
         type: string
-      incident_title:
-        type: string
       lightbox_type:
         type: string
       machine_model:
@@ -167,9 +165,6 @@ definitions:
           incident_description:
             example: Description of the machine error
             type: string
-          incident_title:
-            example: Machine Error
-            type: string
           lightbox_type:
             example: Type A
             type: string
@@ -244,17 +239,17 @@ definitions:
         example: true
         type: boolean
     type: object
-host: localhost:8080
+host: g3p06lb7-9200.asse.devtunnels.ms
 info:
   contact:
     email: tsaqif@adamata.co
     name: API Support
-  description: API untuk menerima webhook dari Lark
+  description: Lark Report API Service
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   termsOfService: https://example.com/terms
-  title: API Lark Webhook
+  title: Lark Report API
   version: "1.0"
 paths:
   /:
@@ -354,6 +349,8 @@ paths:
       summary: Lark Webhook
       tags:
       - Webhook
+schemes:
+- https
 securityDefinitions:
   BearerAuth:
     in: header

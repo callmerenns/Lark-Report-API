@@ -24,17 +24,16 @@ func (r *recordRepo) Create(ctx context.Context, rec domain.Record) (string, err
 
 	err := r.db.QueryRow(ctx, `
 		INSERT INTO records (
-			incident_title, incident_description, machine_model,
+			incident_description, machine_model,
 			lightbox_type, set_type, types_of_spareparts,
 			how_to_handle, collect_dataset, processing_model,
 			date_of_incident, time_of_incident, day_of_incident,
 			process_reason, created_by, modified_by, status
 		) VALUES (
-			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16
+			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
 		)
 		RETURNING id
 	`,
-		rec.IncidentTitle,
 		rec.IncidentDescription,
 		rec.MachineModel,
 		rec.LightboxType,

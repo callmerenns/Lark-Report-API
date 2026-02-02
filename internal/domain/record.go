@@ -1,7 +1,6 @@
 package domain
 
 type Record struct {
-	IncidentTitle       string `json:"incident_title"`
 	IncidentDescription string `json:"incident_description"`
 	MachineModel        string `json:"machine_model"`
 	LightboxType        string `json:"lightbox_type"`

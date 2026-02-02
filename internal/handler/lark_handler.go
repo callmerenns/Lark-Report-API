@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -53,6 +54,13 @@ func (h *LarkHandler) HandleWebhook(c *gin.Context) {
 
 	id, err := h.service.CreateRecord(c.Request.Context(), req.Data)
 	if err != nil {
+		slog.Error(
+			"failed to create record",
+			"error", err,
+			"path", c.FullPath(),
+			"method", c.Request.Method,
+		)
+
 		c.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
 			Message: "Failed to create record",
@@ -68,7 +76,6 @@ func (h *LarkHandler) HandleWebhook(c *gin.Context) {
 		Message: "Record created successfully",
 		Data: response.RecordCreatedData{
 			ID:                  id,
-			IncidentTitle:       req.Data.IncidentTitle,
 			IncidentDescription: req.Data.IncidentDescription,
 			MachineModel:        req.Data.MachineModel,
 			LightboxType:        req.Data.LightboxType,

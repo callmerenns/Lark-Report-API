@@ -1,8 +1,10 @@
 package router
 
 import (
+	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -20,10 +22,34 @@ func RegisterRoutes(
 	tokenHandler *handler.TokenHandler,
 ) {
 
+	// ✅ HANDLE PREFLIGHT
+	r.Use(func(c *gin.Context) {
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
+
+	// ✅ CORS FIX (DEVTUNNELS COMPATIBLE)
+	r.Use(cors.New(cors.Config{
+		AllowOriginFunc: func(origin string) bool {
+			return strings.HasSuffix(origin, ".devtunnels.ms")
+		},
+		AllowMethods: []string{
+			"GET", "POST", "PUT", "DELETE", "OPTIONS",
+		},
+		AllowHeaders: []string{
+			"Origin", "Content-Type", "Authorization",
+		},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// Root
 	r.GET("/", healthHandler.Welcome)
 
-	// Webhook (JWT + Secret + Rate Limit)
+	// Webhook
 	webhook := r.Group("/webhook")
 	webhook.Use(
 		middleware.LuaRateLimiter(cfg, "lark_webhook", 30, time.Minute),
@@ -34,7 +60,7 @@ func RegisterRoutes(
 		webhook.POST("/lark", larkHandler.HandleWebhook)
 	}
 
-	// Internal (SUPER STRICT)
+	// Internal
 	internal := r.Group("/internal")
 	internal.Use(
 		middleware.LuaRateLimiter(cfg, "internal", 5, time.Minute),

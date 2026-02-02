@@ -36,7 +36,7 @@ func NewTokenHandler(cfg *config.Config) *TokenHandler {
 // @Router       /internal/generate-lark-token [get]
 func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
 	now := time.Now()
-	expiresAt := now.Add(1 * time.Hour)
+	expiresAt := now.Add(9 * time.Hour)
 	jti := uuid.NewString()
 
 	claims := jwt.MapClaims{
