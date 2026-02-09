@@ -529,7 +529,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "g3p06lb7-9200.asse.devtunnels.ms",
+	Host:             "api.lark-report.space",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
 	Title:            "Lark Report API",

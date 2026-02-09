@@ -2,24 +2,35 @@ package database
 
 import (
 	"context"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
+	"go.uber.org/zap"
 )
 
 var Redis *redis.Client
 
 func InitRedis(addr, password string, db int) {
+
+	logger.Log.App.Info(
+		"initializing_redis_connection",
+		zap.String("addr", addr),
+	)
+
 	var opt *redis.Options
 	var err error
 
-	// 🔥 Support rediss:// (Upstash)
+	// 🔥 Support redis:// & rediss:// (Upstash)
 	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
 		opt, err = redis.ParseURL(addr)
 		if err != nil {
-			log.Fatal("Failed parse Redis URL:", err)
+			logger.Log.Error.Error(
+				"failed_to_parse_redis_url",
+				zap.Error(err),
+			)
+			panic(err)
 		}
 	} else {
 		opt = &redis.Options{
@@ -35,14 +46,24 @@ func InitRedis(addr, password string, db int) {
 	defer cancel()
 
 	if err := Redis.Ping(ctx).Err(); err != nil {
-		log.Fatal("Failed connect Redis:", err)
+		logger.Log.Error.Error(
+			"failed_to_connect_redis",
+			zap.Error(err),
+		)
+		panic(err)
 	}
 
-	log.Println("Connected to Redis")
+	logger.Log.App.Info(
+		"redis_connected",
+		zap.Int("db", db),
+	)
 }
 
 func CloseRedis() {
 	if Redis != nil {
-		Redis.Close()
+		_ = Redis.Close()
+		logger.Log.App.Info(
+			"redis_connection_closed",
+		)
 	}
 }

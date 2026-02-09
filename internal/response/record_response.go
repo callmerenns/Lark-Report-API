@@ -3,7 +3,7 @@ package response
 import "time"
 
 type RecordCreatedData struct {
-	ID                  string    `json:"id" example:"1"`
+	ID                  int64     `json:"id" example:"1"`
 	IncidentDescription string    `json:"incident_description" example:"Description of the machine error"`
 	MachineModel        string    `json:"machine_model" example:"Model X"`
 	LightboxType        string    `json:"lightbox_type" example:"Type A"`

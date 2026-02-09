@@ -1,14 +1,15 @@
 package handler
 
 import (
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tsaqif-19/lark-report-api/internal/domain"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
 	"github.com/tsaqif-19/lark-report-api/internal/response"
 	"github.com/tsaqif-19/lark-report-api/internal/service"
+	"go.uber.org/zap"
 )
 
 type LarkHandler struct {
@@ -40,7 +41,16 @@ func (h *LarkHandler) HandleWebhook(c *gin.Context) {
 		Data domain.Record `json:"data"`
 	}
 
+	// 🔐 Invalid request (client error)
 	if err := c.ShouldBindJSON(&req); err != nil {
+
+		logger.Log.App.Warn(
+			"invalid_webhook_payload",
+			zap.String("endpoint", c.FullPath()),
+			zap.String("ip", c.ClientIP()),
+			zap.Error(err),
+		)
+
 		c.JSON(http.StatusBadRequest, response.APIResponse{
 			Success: false,
 			Message: "Invalid request payload",
@@ -52,14 +62,18 @@ func (h *LarkHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
+	// 🎯 Business event
+	logger.Log.App.Info(
+		"lark_webhook_received",
+		zap.String("endpoint", c.FullPath()),
+		zap.String("method", c.Request.Method),
+		zap.String("created_by", req.Data.CreatedBy),
+	)
+
 	id, err := h.service.CreateRecord(c.Request.Context(), req.Data)
 	if err != nil {
-		slog.Error(
-			"failed to create record",
-			"error", err,
-			"path", c.FullPath(),
-			"method", c.Request.Method,
-		)
+		// ❌ JANGAN log error di sini
+		// Error SUDAH di-log di service
 
 		c.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
@@ -70,6 +84,12 @@ func (h *LarkHandler) HandleWebhook(c *gin.Context) {
 		})
 		return
 	}
+
+	// 🎉 Success event (optional, boleh / tidak)
+	logger.Log.App.Info(
+		"record_created_successfully",
+		zap.Int64("record_id", id),
+	)
 
 	c.JSON(http.StatusCreated, response.APIResponse{
 		Success: true,

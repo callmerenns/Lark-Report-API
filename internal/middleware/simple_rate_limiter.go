@@ -11,7 +11,9 @@ import (
 	"github.com/tsaqif-19/lark-report-api/internal/config"
 	"github.com/tsaqif-19/lark-report-api/internal/constant"
 	"github.com/tsaqif-19/lark-report-api/internal/database"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
 	"github.com/tsaqif-19/lark-report-api/internal/response"
+	"go.uber.org/zap"
 )
 
 func SimpleRateLimiter(
@@ -23,29 +25,73 @@ func SimpleRateLimiter(
 
 	return func(c *gin.Context) {
 		rdb := database.Redis
-		ctx := context.Background()
+		if rdb == nil {
+			logger.Log.Error.Error(
+				"redis_not_initialized",
+				zap.String("middleware", "simple_rate_limiter"),
+			)
 
-		key := fmt.Sprintf("rate:%s:%s", prefix, c.ClientIP())
-
-		count, err := rdb.Incr(ctx, key).Result()
-		if err != nil {
-			c.AbortWithStatusJSON(500, response.APIResponse{
+			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
 				Message: "Internal server error",
 				Error: &response.APIError{
 					Code:    constant.ErrorInternalServer,
-					Details: err.Error(),
+					Details: "Redis not initialized",
 				},
 			})
 			return
 		}
 
-		// set TTL only on first request
+		ctx := context.Background()
+		ip := c.ClientIP()
+		key := fmt.Sprintf("rate:%s:%s", prefix, ip)
+
+		count, err := rdb.Incr(ctx, key).Result()
+		if err != nil {
+			logger.Log.Error.Error(
+				"rate_limiter_redis_error",
+				zap.Error(err),
+				zap.String("key", key),
+				zap.String("ip", ip),
+			)
+
+			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
+				Success: false,
+				Message: "Internal server error",
+				Error: &response.APIError{
+					Code:    constant.ErrorInternalServer,
+					Details: "Rate limiter error",
+				},
+			})
+			return
+		}
+
 		if count == 1 {
-			rdb.Expire(ctx, key, window)
+			_ = rdb.Expire(ctx, key, window).Err()
+		}
+
+		// DEV LOG (AMAN)
+		if cfg.AppEnv == "dev" {
+			logger.Log.App.Info(
+				"rate_limiter_hit",
+				zap.String("key", key),
+				zap.Int64("count", count),
+				zap.Int("limit", limit),
+			)
 		}
 
 		if count > int64(limit) {
+			logger.Log.Security.Warn(
+				"rate_limit_exceeded",
+				zap.String("prefix", prefix),
+				zap.String("ip", ip),
+				zap.Int64("count", count),
+				zap.Int("limit", limit),
+				zap.Duration("window", window),
+				zap.String("path", c.FullPath()),
+				zap.String("method", c.Request.Method),
+			)
+
 			c.Header("Retry-After", strconv.Itoa(int(window.Seconds())))
 
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, response.APIResponse{

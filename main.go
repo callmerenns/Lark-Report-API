@@ -1,6 +1,9 @@
 package main
 
-import "github.com/tsaqif-19/lark-report-api/cmd/server"
+import (
+	"github.com/tsaqif-19/lark-report-api/cmd/server"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
+)
 
 // @title           API Lark Webhook
 // @version         1.0
@@ -13,7 +16,7 @@ import "github.com/tsaqif-19/lark-report-api/cmd/server"
 // @license.name  MIT
 // @license.url   https://opensource.org/licenses/MIT
 
-// @host      localhost:9200
+// @host      localhost:8080
 // @BasePath  /
 
 // 🔐 SECURITY DEFINITION (DI SINI)
@@ -27,10 +30,17 @@ import "github.com/tsaqif-19/lark-report-api/cmd/server"
 // @title Lark Report API
 // @version 1.0
 // @description Lark Report API Service
-// @host g3p06lb7-9200.asse.devtunnels.ms
+// @host api.lark-report.space
 // @schemes https
 // @BasePath /
 
 func main() {
+	logger.InitLogger()
+	defer func() {
+		logger.Log.App.Sync()
+		logger.Log.Access.Sync()
+		logger.Log.Error.Sync()
+		logger.Log.Security.Sync()
+	}()
 	server.Run()
 }

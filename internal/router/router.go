@@ -46,14 +46,25 @@ func RegisterRoutes(
 		MaxAge:           12 * time.Hour,
 	}))
 
+	r.Use(
+		middleware.AccessLogger(),
+		middleware.RecoveryLogger(),
+	)
+
 	// Root
-	r.GET("/", healthHandler.Welcome)
+	root := r.Group("/")
+	root.Use(
+		middleware.SimpleRateLimiter(cfg, "root", 10, 10*time.Minute),
+	)
+	{
+		root.GET("/", healthHandler.Welcome)
+	}
 
 	// Webhook
 	webhook := r.Group("/webhook")
 	webhook.Use(
 		// middleware.LuaRateLimiter(cfg, "lark_webhook", 30, time.Minute),
-		middleware.SimpleRateLimiter(cfg, "lark_webhook", 60, time.Minute),
+		middleware.SimpleRateLimiter(cfg, "lark_webhook", 60, 10*time.Minute),
 		middleware.WebhookSecret(cfg),
 		middleware.JWT(cfg),
 	)
@@ -65,7 +76,7 @@ func RegisterRoutes(
 	internal := r.Group("/internal")
 	internal.Use(
 		// middleware.LuaRateLimiter(cfg, "internal", 5, time.Minute),
-		middleware.SimpleRateLimiter(cfg, "internal", 10, time.Minute),
+		middleware.SimpleRateLimiter(cfg, "internal", 10, 10*time.Minute),
 		middleware.WebhookSecret(cfg),
 	)
 	{
@@ -73,5 +84,11 @@ func RegisterRoutes(
 	}
 
 	// Swagger
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	swagger := r.Group("/swagger")
+	swagger.Use(
+		middleware.SimpleRateLimiter(cfg, "swagger", 5, 10*time.Minute),
+	)
+	{
+		swagger.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 }

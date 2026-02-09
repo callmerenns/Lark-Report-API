@@ -239,7 +239,7 @@ definitions:
         example: true
         type: boolean
     type: object
-host: g3p06lb7-9200.asse.devtunnels.ms
+host: api.lark-report.space
 info:
   contact:
     email: tsaqif@adamata.co

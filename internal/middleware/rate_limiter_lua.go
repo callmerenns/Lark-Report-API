@@ -9,7 +9,9 @@ import (
 
 	"github.com/tsaqif-19/lark-report-api/internal/config"
 	"github.com/tsaqif-19/lark-report-api/internal/constant"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
 	"github.com/tsaqif-19/lark-report-api/internal/response"
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tsaqif-19/lark-report-api/internal/database"
@@ -42,6 +44,11 @@ func LuaRateLimiter(
 	return func(c *gin.Context) {
 		rdb := database.Redis
 		if rdb == nil {
+			logger.Log.Error.Error(
+				"redis_not_initialized",
+				zap.String("middleware", "lua_rate_limiter"),
+			)
+
 			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
 				Message: "Internal server error",
@@ -54,12 +61,9 @@ func LuaRateLimiter(
 		}
 
 		ctx := context.Background()
+		ip := c.ClientIP()
 
-		key := fmt.Sprintf(
-			"rate:%s:%s",
-			prefix,
-			c.ClientIP(),
-		)
+		key := fmt.Sprintf("rate:%s:%s", prefix, ip)
 
 		now := time.Now().UnixNano()
 		windowStart := time.Now().Add(-window).UnixNano()
@@ -75,6 +79,13 @@ func LuaRateLimiter(
 		).Result()
 
 		if err != nil {
+			logger.Log.Error.Error(
+				"lua_rate_limiter_execution_failed",
+				zap.Error(err),
+				zap.String("key", key),
+				zap.String("ip", ip),
+			)
+
 			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
 				Message: "Internal server error",
@@ -89,6 +100,12 @@ func LuaRateLimiter(
 		// SAFE CAST
 		res, ok := result.([]interface{})
 		if !ok || len(res) == 0 {
+			logger.Log.Error.Error(
+				"lua_rate_limiter_invalid_response",
+				zap.Any("result", result),
+				zap.String("key", key),
+			)
+
 			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
 				Message: "Internal server error",
@@ -102,6 +119,12 @@ func LuaRateLimiter(
 
 		allowed, ok := res[0].(int64)
 		if !ok {
+			logger.Log.Error.Error(
+				"lua_rate_limiter_invalid_flag",
+				zap.Any("allowed", res[0]),
+				zap.String("key", key),
+			)
+
 			c.AbortWithStatusJSON(http.StatusInternalServerError, response.APIResponse{
 				Success: false,
 				Message: "Internal server error",
@@ -114,6 +137,16 @@ func LuaRateLimiter(
 		}
 
 		if allowed == 0 {
+			logger.Log.Security.Warn(
+				"rate_limit_exceeded",
+				zap.String("prefix", prefix),
+				zap.String("ip", ip),
+				zap.String("path", c.FullPath()),
+				zap.String("method", c.Request.Method),
+				zap.Int("limit", limit),
+				zap.Duration("window", window),
+			)
+
 			c.Header("Retry-After", strconv.Itoa(int(window.Seconds())))
 
 			errorBody := &response.APIError{
@@ -121,8 +154,15 @@ func LuaRateLimiter(
 				Details: constant.MsgTooManyRequests,
 			}
 
-			// DEV ONLY DEBUG INFO
+			// DEV ONLY
 			if cfg.AppEnv == "dev" {
+				logger.Log.App.Info(
+					"rate_limiter_debug",
+					zap.String("key", key),
+					zap.Int("limit", limit),
+					zap.Duration("window", window),
+				)
+
 				errorBody.Window = window.String()
 				errorBody.Limit = limit
 			}

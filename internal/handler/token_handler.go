@@ -11,6 +11,9 @@ import (
 	"github.com/tsaqif-19/lark-report-api/internal/config"
 	"github.com/tsaqif-19/lark-report-api/internal/constant"
 	"github.com/tsaqif-19/lark-report-api/internal/database"
+	"github.com/tsaqif-19/lark-report-api/internal/logger"
+	"go.uber.org/zap"
+
 	"github.com/tsaqif-19/lark-report-api/internal/response"
 )
 
@@ -35,9 +38,17 @@ func NewTokenHandler(cfg *config.Config) *TokenHandler {
 // @Failure		 500 {object} response.InternalServerErrorExample "Internal server error"
 // @Router       /internal/generate-lark-token [get]
 func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
+
 	now := time.Now()
-	expiresAt := now.Add(9 * time.Hour)
+	expiresAt := now.Add(24 * time.Hour)
 	jti := uuid.NewString()
+
+	// 🔐 Event: token request
+	logger.Log.Security.Info(
+		"generate_lark_token_requested",
+		zap.String("endpoint", c.FullPath()),
+		zap.String("ip", c.ClientIP()),
+	)
 
 	claims := jwt.MapClaims{
 		"iss":  "lark",
@@ -50,6 +61,14 @@ func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(h.cfg.JWTSecret))
 	if err != nil {
+
+		// ❌ Error teknis (JWT)
+		logger.Log.Error.Error(
+			"jwt_signing_failed",
+			zap.Error(err),
+			zap.String("handler", "token"),
+		)
+
 		c.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
 			Message: "Failed to generate token",
@@ -61,7 +80,7 @@ func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
 		return
 	}
 
-	// SIMPAN JTI AKTIF (invalidate token lama)
+	// 🔐 Simpan JTI aktif (invalidate token lama)
 	key := "lark:active_jti"
 	if err := database.Redis.Set(
 		context.Background(),
@@ -69,6 +88,14 @@ func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
 		jti,
 		time.Until(expiresAt),
 	).Err(); err != nil {
+
+		// ❌ Error infra (Redis)
+		logger.Log.Error.Error(
+			"failed_to_store_active_jti",
+			zap.Error(err),
+			zap.String("handler", "token"),
+		)
+
 		c.JSON(http.StatusInternalServerError, response.APIResponse{
 			Success: false,
 			Message: "Failed to store token",
@@ -80,11 +107,18 @@ func (h *TokenHandler) GenerateLarkToken(c *gin.Context) {
 		return
 	}
 
+	// ✅ Success event (AMAN)
+	logger.Log.Security.Info(
+		"lark_token_generated",
+		zap.String("jti", jti),
+		zap.Time("expires_at", expiresAt),
+	)
+
 	c.JSON(http.StatusOK, response.APIResponse{
 		Success: true,
 		Message: "Token generated successfully",
 		Data: gin.H{
-			"access_token": tokenStr,
+			"access_token": tokenStr, // ⚠️ dikirim ke client, TIDAK ke log
 			"token_type":   "Bearer",
 			"expires_in":   int64(time.Until(expiresAt).Seconds()),
 		},
